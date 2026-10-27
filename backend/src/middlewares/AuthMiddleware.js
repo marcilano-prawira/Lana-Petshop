@@ -1,23 +1,40 @@
 import AppError from '../utils/AppError.js';
 
-/**
- * SEMENTARA: identitas diambil dari header "x-user-id" karena fitur login belum dibuat.
- * Role dibaca dari tabel users. Setelah login dibuat, ganti isi identifikasi() dengan verifikasi JWT.
- */
 export default class AuthMiddleware {
-  constructor(userRepository) {
+  constructor({ tokenService, tokenRepository, userRepository }) {
+    this.tokenService = tokenService;
+    this.tokenRepository = tokenRepository;
     this.userRepository = userRepository;
   }
 
+  // Header: Authorization: Bearer <token>
   identifikasi = async (req, res, next) => {
-    const idUser = req.header('x-user-id');
-    if (!idUser) {
-      throw new AppError('Header x-user-id wajib diisi (sementara, sebelum fitur login dibuat)', 401);
+    const [skema, token] = (req.header('authorization') ?? '').split(' ');
+    if (skema?.toLowerCase() !== 'bearer' || !token) {
+      throw new AppError('Token tidak ditemukan, silakan login terlebih dahulu', 401);
     }
-    const user = await this.userRepository.findById(idUser);
-    if (!user) throw new AppError('User tidak ditemukan', 401);
+
+    let payload;
+    try {
+      payload = this.tokenService.verifikasi(token);
+    } catch (err) {
+      throw new AppError(
+        err.name === 'TokenExpiredError'
+          ? 'Sesi telah berakhir, silakan login kembali'
+          : 'Token tidak valid',
+        401
+      );
+    }
+
+    if (await this.tokenRepository.sudahDicabut(payload.jti)) {
+      throw new AppError('Sesi sudah berakhir (logout), silakan login kembali', 401);
+    }
+
+    const user = await this.userRepository.findById(payload.sub);
+    if (!user) throw new AppError('Akun tidak ditemukan', 401);
 
     req.user = { id_user: user.id_user, role: user.role };
+    req.token = payload;
     next();
   };
 

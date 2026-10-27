@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import authRoutes from './authRoutes.js';
 import paketGroomingRoutes from './paketGroomingRoutes.js';
 import pesananRoutes from './pesananRoutes.js';
 import petHotelRoutes from './petHotelRoutes.js';
@@ -8,6 +9,7 @@ import laporanRoutes from './laporanRoutes.js';
 
 const router = Router();
 
+router.use('/auth', authRoutes);
 router.use('/paket-grooming', paketGroomingRoutes);
 router.use('/pesanan', pesananRoutes);
 router.use('/pet-hotel', petHotelRoutes);
