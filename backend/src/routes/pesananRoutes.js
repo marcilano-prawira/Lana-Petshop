@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { auth, pesananController as c } from '../container.js';
+import { auth, pesananController as c, petController } from '../container.js';
 
 const router = Router();
 router.use(auth.identifikasi);
 
-router.get('/pet-saya', auth.izinkan('CUSTOMER'), c.lihatPetSaya);
+router.get('/pet-saya', auth.izinkan('CUSTOMER'), petController.lihat);
+router.post('/pet-saya', auth.izinkan('CUSTOMER'), petController.tambah);
 router.post('/grooming', auth.izinkan('CUSTOMER'), c.pesanGrooming);
 router.post('/hotel', auth.izinkan('CUSTOMER'), c.pesanHotel);
 router.get('/', c.lihat);                                   // Admin: semua, Customer: miliknya
