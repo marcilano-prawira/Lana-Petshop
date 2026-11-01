@@ -1,0 +1,24 @@
+{
+  "name": "lana-petshop-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:validasi": "node --test src/lib/validators.test.js",
+    "test:e2e": "node tests/e2e-test.mjs",
+    "test": "npm run test:validasi && npm run test:e2e"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11",
+    "jsdom": "^30.0.0"
+  }
+}
