@@ -55,7 +55,8 @@ export function PilihPet({ data, nilai, onChange, errors, tampilkanError, disabl
     return (
       <div className="kosong">
         <strong>Belum ada hewan peliharaan di akun Anda.</strong>
-        <p>Pemesanan memerlukan hewan yang sudah terdaftar. Silakan hubungi admin Lana Petshop untuk mendaftarkan hewan Anda.</p>
+        <p>Pemesanan memerlukan hewan yang sudah terdaftar. Daftarkan hewan Anda terlebih dahulu, lalu kembali ke halaman ini untuk memesan.</p>
+        <Link to="/hewan-saya" className="btn btn--primary">Daftarkan hewan</Link>
       </div>
     );
   }

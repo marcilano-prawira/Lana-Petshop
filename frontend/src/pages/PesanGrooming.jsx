@@ -66,7 +66,7 @@ export default function PesanGrooming() {
     try {
       const res = await apiAuth('/pesanan/grooming', {
         method: 'POST',
-        body: { id_pet: Number(idPet), id_layanan: Number(idLayanan) },
+        body: { id_pet: idPet, id_layanan: idLayanan },
       });
       setHasil(res.data);
     } catch (err) {

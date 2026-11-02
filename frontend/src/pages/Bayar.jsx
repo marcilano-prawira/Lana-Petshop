@@ -37,7 +37,7 @@ export default function Bayar() {
   const { idPesanan } = useParams();
   const { user, apiAuth } = useAuth();
   const adalahCustomer = user.role === 'CUSTOMER';
-  const idValid = /^[1-9][0-9]*$/.test(idPesanan ?? '');
+  const idValid = /^[A-Za-z0-9_-]{1,20}$/.test(idPesanan ?? '');
 
   const [data, setData] = useState({ status: 'loading', pesanan: null, pembayaran: null, pesan: '' });
   const [metode, setMetode] = useState('');
@@ -123,7 +123,7 @@ export default function Bayar() {
       await apiAuth('/pembayaran', {
         method: 'POST',
         body: {
-          id_pesanan: Number(idPesanan),
+          id_pesanan: idPesanan,
           metode_pembayaran: metode,
           bukti_pembayaran: foto.dataUrl,
         },

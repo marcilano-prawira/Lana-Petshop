@@ -58,7 +58,7 @@ export default function PesanHotel() {
       const res = await apiAuth('/pesanan/hotel', {
         method: 'POST',
         body: {
-          id_pet: Number(form.id_pet),
+          id_pet: form.id_pet,
           jam_checkin: new Date(form.checkin).toISOString(),
           jam_checkout: new Date(form.checkout).toISOString(),
         },
