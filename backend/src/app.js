@@ -6,7 +6,7 @@ import ErrorMiddleware from './middlewares/ErrorMiddleware.js';
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 
 app.get('/', (req, res) => {
   res.json({ success: true, message: 'API Lana PetShop Alhamdulillah berjalan' });
