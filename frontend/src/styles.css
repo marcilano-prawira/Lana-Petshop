@@ -356,6 +356,7 @@ a.menu-card { text-decoration: none; color: inherit; display: block; }
 
 .kosong strong { display: block; color: var(--brown); margin-bottom: 4px; }
 .kosong p { margin: 0; }
+.kosong .btn { margin-top: 16px; }
 
 /* ===== Utilitas ===== */
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -494,3 +495,9 @@ select.input { appearance: auto; cursor: pointer; }
 .tabel td small { display: block; color: var(--ink-soft); }
 .tabel__angka { font-weight: 800; white-space: nowrap; }
 .tabel tbody tr:hover { background: #fff6ea; }
+/* ---- Tambahan fitur admin ---- */
+.input--area { resize: vertical; min-height: 84px; font-family: inherit; line-height: 1.4; }
+.aksi-baris { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.sub-judul { font-size: 1rem; font-weight: 800; color: var(--brown); margin: 0 0 10px; }
+.periksa--lebar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }

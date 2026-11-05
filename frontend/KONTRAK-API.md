@@ -16,6 +16,11 @@ di backend. **Belum ada perubahan database** — fokus saat ini frontend dulu.
 | Daftar pembayaran | `GET /pembayaran` (customer: miliknya, admin: semua) |
 | Verifikasi admin | `PATCH /pembayaran/:id/verifikasi` dengan `{ "status_pembayaran": "TERVERIFIKASI" \| "DITOLAK" }` |
 | Progres pesanan | `GET /progress/pesanan/:id` |
+| **Admin** — update progres | `POST /progress/pesanan/:id` `{ status_progress, keterangan? }` (hanya pesanan `DIPROSES`; status "Selesai" menutup pesanan) |
+| **Admin** — paket grooming | `POST /paket-grooming`, `PUT /paket-grooming/:id`, `DELETE /paket-grooming/:id` (409 jika paket sudah dipakai pesanan) |
+| Pet hotel | `GET /pet-hotel` (pelanggan: miliknya, admin: semua) |
+| **Admin** — pet hotel | `PUT /pet-hotel/:id` `{ jam_checkin, jam_checkout }`, `DELETE /pet-hotel/:id` (keduanya 409 jika pesanan sudah punya pembayaran) |
+| **Admin** — laporan | `POST /laporan` `{ bulan, tahun }`, `GET /laporan`, `GET /laporan/:id` (berisi `detail`) |
 
 ## 2. Format foto bukti pembayaran
 

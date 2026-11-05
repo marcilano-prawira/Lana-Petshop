@@ -12,13 +12,16 @@ const MENU_CUSTOMER = [
   { ikon: '🏠', judul: 'Pet Hotel', teks: 'Titipkan hewan kesayangan Anda.', to: '/pesan-hotel' },
   { ikon: '📋', judul: 'Pesanan Saya', teks: 'Bayar, batalkan, dan pantau progres.', to: '/pesanan' },
   { ikon: '🐾', judul: 'Hewan Saya', teks: 'Daftarkan dan kelola hewan Anda.', to: '/hewan-saya' },
+  { ikon: '🏨', judul: 'Data Pet Hotel', teks: 'Lihat detail penitipan hewan Anda.', to: '/pet-hotel' },
 ];
 
 const MENU_ADMIN = [
   { ikon: '🧾', judul: 'Verifikasi Pembayaran', teks: 'Periksa bukti bayar pelanggan.', to: '/admin/pembayaran', badge: 'menunggu' },
-  { ikon: '📋', judul: 'Semua Pesanan', teks: 'Lihat seluruh pesanan masuk.' },
-  { ikon: '⏱', judul: 'Update Progress', teks: 'Perbarui progres layanan.' },
-  { ikon: '📊', judul: 'Laporan', teks: 'Laporan penjualan.' },
+  { ikon: '📋', judul: 'Semua Pesanan', teks: 'Lihat seluruh pesanan masuk.', to: '/admin/pesanan' },
+  { ikon: '⏱', judul: 'Update Progress', teks: 'Perbarui progres layanan.', to: '/admin/pesanan?tab=diproses' },
+  { ikon: '✂', judul: 'Paket Grooming', teks: 'Tambah, ubah, dan hapus paket.', to: '/admin/paket' },
+  { ikon: '🏨', judul: 'Pet Hotel', teks: 'Lihat dan kelola pesanan hotel.', to: '/pet-hotel' },
+  { ikon: '📊', judul: 'Laporan', teks: 'Laporan penjualan bulanan.', to: '/admin/laporan' },
 ];
 
 function menuUntuk(role) {

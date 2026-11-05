@@ -1,6 +1,16 @@
 # Lana Petshop – Frontend (React + Vite)
 
-Halaman: **Login**, **Registrasi** (tanpa email), **Home**, **Pesan Grooming**, **Pesan Pet Hotel**, **Hewan Saya**, **Pesanan Saya**, **Bayar** (upload bukti), dan sisi admin **Verifikasi Pembayaran**. Khusus desktop.
+Halaman pelanggan: **Login**, **Registrasi** (tanpa email), **Home**, **Pesan Grooming**, **Pesan Pet Hotel**, **Hewan Saya**, **Pesanan Saya** (termasuk progres), **Bayar** (upload bukti), **Data Pet Hotel**.
+
+Halaman admin: **Verifikasi Pembayaran**, **Semua Pesanan** (+ update progres), **Paket Grooming** (tambah/ubah/hapus), **Data Pet Hotel** (lihat/ubah/hapus), **Laporan** bulanan. Khusus desktop.
+
+| Rute | Siapa | Fungsi |
+|---|---|---|
+| `/admin/pembayaran` | Admin | Periksa foto bukti, terima / tolak |
+| `/admin/pesanan` | Admin | Semua pesanan, riwayat progres, form update progres (`?tab=diproses` = pesanan yang bisa diupdate) |
+| `/admin/paket` | Admin | Kelola paket grooming |
+| `/admin/laporan` | Admin | Buat dan lihat laporan bulanan |
+| `/pet-hotel` | Pelanggan & Admin | Pelanggan: detail miliknya. Admin: semua, plus ubah/hapus |
 
 ## Menjalankan
 ```bash

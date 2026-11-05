@@ -10,6 +10,17 @@ import {
   validasiJenisKelamin,
   validasiAlamat,
   skorPassword,
+  validasiNamaPaket,
+  validasiJenisPaket,
+  validasiDetailPaket,
+  validasiHargaPaket,
+  validasiCheckinAdmin,
+  validasiStatusProgress,
+  validasiKeteranganProgress,
+  menandaiSelesai,
+  validasiBulan,
+  validasiTahun,
+  validasiPeriodeLaporan,
 } from './validators.js';
 
 const ada = (arr, teks) => arr.some((a) => a.includes(teks));
@@ -167,4 +178,66 @@ test('status gabungan pesanan + pembayaran', () => {
 test('total pesanan', () => {
   assert.equal(totalPesanan({ jenis_pesanan: 'GROOMING', harga_paket: '120000.00' }), 120000);
   assert.equal(totalPesanan({ jenis_pesanan: 'HOTEL', jam_checkin: '2026-11-05T09:00:00Z', jam_checkout: '2026-11-08T09:00:00Z', tarif_per_hari: '75000' }), 225000);
+});
+
+// ---- fitur admin ----
+test('paket: nama kosong / terlalu panjang / valid', () => {
+  assert.deepEqual(validasiNamaPaket('  '), ['Nama paket wajib diisi.']);
+  assert.ok(ada(validasiNamaPaket('a'.repeat(101)), 'Maksimal 100'));
+  assert.deepEqual(validasiNamaPaket('Grooming Lengkap'), []);
+});
+test('paket: jenis kosong / terlalu panjang / valid', () => {
+  assert.deepEqual(validasiJenisPaket(''), ['Jenis paket wajib diisi.']);
+  assert.ok(ada(validasiJenisPaket('a'.repeat(51)), 'Maksimal 50'));
+  assert.deepEqual(validasiJenisPaket('Premium'), []);
+});
+test('paket: detail opsional, maks 500', () => {
+  assert.deepEqual(validasiDetailPaket(''), []);
+  assert.ok(ada(validasiDetailPaket('x'.repeat(501)), 'Maksimal 500'));
+});
+test('paket: harga', () => {
+  assert.deepEqual(validasiHargaPaket(''), ['Harga wajib diisi.']);
+  assert.ok(ada(validasiHargaPaket('150.000'), 'angka bulat'));
+  assert.ok(ada(validasiHargaPaket('-5'), 'angka bulat'));
+  assert.ok(ada(validasiHargaPaket('12abc'), 'angka bulat'));
+  assert.ok(ada(validasiHargaPaket('0'), 'lebih dari 0'));
+  assert.ok(ada(validasiHargaPaket('100000001'), 'terlalu besar'));
+  assert.deepEqual(validasiHargaPaket('150000'), []);
+  assert.deepEqual(validasiHargaPaket(150000), []);
+});
+test('hotel (admin): check-in boleh lampau, tapi wajib valid', () => {
+  assert.deepEqual(validasiCheckinAdmin(''), ['Waktu check-in wajib diisi.']);
+  assert.ok(ada(validasiCheckinAdmin('bukan tanggal'), 'tidak valid'));
+  assert.deepEqual(validasiCheckinAdmin('2020-01-01T09:00'), []);
+});
+test('progres: status wajib, maks 30 karakter; keterangan opsional', () => {
+  assert.deepEqual(validasiStatusProgress('   '), ['Status progres wajib diisi.']);
+  assert.ok(ada(validasiStatusProgress('x'.repeat(31)), 'Maksimal 30'));
+  assert.deepEqual(validasiStatusProgress('Sedang Dimandikan'), []);
+  assert.deepEqual(validasiKeteranganProgress(''), []);
+  assert.ok(ada(validasiKeteranganProgress('x'.repeat(301)), 'Maksimal 300'));
+});
+test('progres: "Selesai" dikenali tanpa peduli huruf besar/spasi', () => {
+  assert.equal(menandaiSelesai('Selesai'), true);
+  assert.equal(menandaiSelesai('  selesai '), true);
+  assert.equal(menandaiSelesai('Hampir selesai'), false);
+  assert.equal(menandaiSelesai(undefined), false);
+});
+test('laporan: bulan & tahun', () => {
+  assert.deepEqual(validasiBulan(''), ['Bulan wajib dipilih.']);
+  assert.ok(ada(validasiBulan('13'), 'antara 1 dan 12'));
+  assert.ok(ada(validasiBulan('0'), 'antara 1 dan 12'));
+  assert.deepEqual(validasiBulan('10'), []);
+  assert.ok(ada(validasiTahun('26'), '4 angka'));
+  assert.ok(ada(validasiTahun('1999'), 'antara 2000'));
+  assert.deepEqual(validasiTahun('2026'), []);
+});
+test('laporan: periode masa depan ditolak, bulan berjalan boleh', () => {
+  const kini = new Date(2026, 9, 15); // 15 Okt 2026
+  assert.deepEqual(validasiPeriodeLaporan(10, 2026, kini), []);
+  assert.deepEqual(validasiPeriodeLaporan(1, 2026, kini), []);
+  assert.deepEqual(validasiPeriodeLaporan(12, 2025, kini), []);
+  assert.ok(ada(validasiPeriodeLaporan(11, 2026, kini), 'masa depan'));
+  assert.ok(ada(validasiPeriodeLaporan(1, 2027, kini), 'masa depan'));
+  assert.deepEqual(validasiPeriodeLaporan(13, 2026, kini), []); // kesalahan bulan dilaporkan validator bulan
 });
