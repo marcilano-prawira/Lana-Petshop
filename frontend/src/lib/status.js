@@ -48,3 +48,10 @@ export const LABEL_PEMBAYARAN = {
 export function ringkasLayanan(p) {
   return p.jenis_pesanan === 'GROOMING' ? `Grooming · ${p.nama_layanan}` : 'Pet Hotel';
 }
+
+export const LABEL_PESANAN = {
+  MENUNGGU: { label: 'Menunggu', tone: 'warn' },
+  DIPROSES: { label: 'Diproses', tone: 'info' },
+  SELESAI: { label: 'Selesai', tone: 'ok' },
+  DIBATALKAN: { label: 'Dibatalkan', tone: 'muted' },
+};

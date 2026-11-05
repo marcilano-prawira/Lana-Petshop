@@ -124,7 +124,7 @@ export default function Login() {
       <form onSubmit={kirim} noValidate className="form">
         <Field
           id="username"
-          label="Username"
+          label="Username*"
           errors={errors.username}
           tampilkanError={tampil('username')}
           valid={errors.username.length === 0}
@@ -152,7 +152,7 @@ export default function Login() {
 
         <Field
           id="password"
-          label="Password"
+          label="Password*"
           errors={errors.password}
           tampilkanError={tampil('password')}
           valid={errors.password.length === 0}

@@ -53,7 +53,6 @@ export function Notice({ tipe = 'info', judul, children, onClose }) {
   );
 }
 
-/* ------------------------------- Field ------------------------------- */
 
 // errors: array alasan. Ditampilkan hanya jika `tampilkanError` true.
 export function Field({

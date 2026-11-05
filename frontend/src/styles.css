@@ -495,3 +495,9 @@ select.input { appearance: auto; cursor: pointer; }
 .tabel td small { display: block; color: var(--ink-soft); }
 .tabel__angka { font-weight: 800; white-space: nowrap; }
 .tabel tbody tr:hover { background: #fff6ea; }
+/* ---- Tambahan fitur admin ---- */
+.input--area { resize: vertical; min-height: 84px; font-family: inherit; line-height: 1.4; }
+.aksi-baris { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.sub-judul { font-size: 1rem; font-weight: 800; color: var(--brown); margin: 0 0 10px; }
+.periksa--lebar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }

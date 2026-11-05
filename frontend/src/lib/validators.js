@@ -294,3 +294,97 @@ export function validasiMetodeBayar(nilai, daftar) {
   if (!daftar.includes(nilai)) return ['Metode pembayaran tidak dikenal. Pilih dari daftar.'];
   return [];
 }
+
+/* ---------------------------- PAKET GROOMING --------------------------- */
+
+export function validasiNamaPaket(nilai) {
+  const t = (typeof nilai === 'string' ? nilai : '').trim();
+  if (!t) return ['Nama paket wajib diisi.'];
+  if (t.length > 100) return [`Nama paket terlalu panjang (${t.length} karakter). Maksimal 100 karakter.`];
+  return [];
+}
+
+export function validasiJenisPaket(nilai) {
+  const t = (typeof nilai === 'string' ? nilai : '').trim();
+  if (!t) return ['Jenis paket wajib diisi.'];
+  if (t.length > 50) return [`Jenis paket terlalu panjang (${t.length} karakter). Maksimal 50 karakter.`];
+  return [];
+}
+
+export function validasiDetailPaket(nilai) {
+  const t = (typeof nilai === 'string' ? nilai : '').trim();
+  if (t.length > 500) return [`Detail terlalu panjang (${t.length} karakter). Maksimal 500 karakter.`];
+  return []; // opsional
+}
+
+export const HARGA_PAKET_MAKS = 100_000_000;
+
+export function validasiHargaPaket(nilai) {
+  const t = String(nilai ?? '').trim();
+  if (!t) return ['Harga wajib diisi.'];
+  if (!/^\d+$/.test(t)) return ['Harga harus berupa angka bulat saja (tanpa titik, koma, atau huruf).'];
+  const n = Number(t);
+  if (n <= 0) return ['Harga harus lebih dari 0.'];
+  if (n > HARGA_PAKET_MAKS) return ['Harga terlalu besar (maksimal Rp100.000.000).'];
+  return [];
+}
+
+/* ------------------------------ PET HOTEL ------------------------------ */
+
+// Admin boleh mengubah jadwal pesanan yang check-in-nya sudah lewat,
+// jadi di sini hanya format yang dicek (aturan "tidak boleh lewat" khusus pelanggan).
+export function validasiCheckinAdmin(nilai) {
+  const d = ke(nilai);
+  if (d === null) return ['Waktu check-in wajib diisi.'];
+  if (d === undefined) return ['Format tanggal/waktu check-in tidak valid.'];
+  return [];
+}
+
+/* ----------------------------- PROGRESS -------------------------------- */
+
+export const PROGRESS_MAKS = 30; // sama dengan VARCHAR(30) di database
+
+export function validasiStatusProgress(nilai) {
+  const t = (typeof nilai === 'string' ? nilai : '').trim();
+  if (!t) return ['Status progres wajib diisi.'];
+  if (t.length > PROGRESS_MAKS) return [`Status progres terlalu panjang (${t.length} karakter). Maksimal ${PROGRESS_MAKS} karakter.`];
+  return [];
+}
+
+export function validasiKeteranganProgress(nilai) {
+  const t = (typeof nilai === 'string' ? nilai : '').trim();
+  if (t.length > 300) return [`Keterangan terlalu panjang (${t.length} karakter). Maksimal 300 karakter.`];
+  return []; // opsional
+}
+
+// "Selesai" menutup pesanan (tidak bisa diubah lagi) — dipakai untuk meminta konfirmasi.
+export const menandaiSelesai = (nilai) => typeof nilai === 'string' && nilai.trim().toLowerCase() === 'selesai';
+
+/* ------------------------------ LAPORAN -------------------------------- */
+
+export function validasiBulan(nilai) {
+  const t = String(nilai ?? '').trim();
+  if (!t) return ['Bulan wajib dipilih.'];
+  const n = Number(t);
+  if (!Number.isInteger(n) || n < 1 || n > 12) return ['Bulan harus antara 1 dan 12.'];
+  return [];
+}
+
+export function validasiTahun(nilai) {
+  const t = String(nilai ?? '').trim();
+  if (!t) return ['Tahun wajib diisi.'];
+  if (!/^\d{4}$/.test(t)) return ['Tahun harus 4 angka, contoh: 2026.'];
+  const n = Number(t);
+  if (n < 2000 || n > 2100) return ['Tahun harus antara 2000 dan 2100.'];
+  return [];
+}
+
+// Laporan hanya untuk bulan yang sudah berjalan (bulan ini atau sebelumnya).
+export function validasiPeriodeLaporan(bulan, tahun, sekarang = new Date()) {
+  if (validasiBulan(bulan).length || validasiTahun(tahun).length) return [];
+  const b = Number(bulan);
+  const t = Number(tahun);
+  const kini = sekarang.getFullYear() * 12 + sekarang.getMonth();
+  if (t * 12 + (b - 1) > kini) return ['Periode laporan tidak boleh di masa depan.'];
+  return [];
+}
