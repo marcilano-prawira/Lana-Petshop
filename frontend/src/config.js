@@ -26,3 +26,13 @@ export const INFO_PEMBAYARAN = [];
 
 // Jenis hewan yang bisa dipilih saat mendaftarkan hewan.
 export const JENIS_HEWAN = ['Kucing', 'Anjing', 'Kelinci', 'Hamster', 'Burung', 'Lainnya'];
+
+// Saran jenis paket grooming (admin tetap boleh mengetik jenis lain, maks. 50 karakter).
+export const JENIS_PAKET = ['Basic', 'Premium', 'Deluxe'];
+
+// Saran status progres saat admin memperbarui layanan (maks. 30 karakter, boleh diketik bebas).
+// "Selesai" menutup pesanan.
+export const SARAN_PROGRESS = {
+  GROOMING: ['Sedang Dimandikan', 'Sedang Dikeringkan', 'Sedang Dirapikan', 'Siap Dijemput', 'Selesai'],
+  HOTEL: ['Hewan Check-in', 'Sedang Dirawat', 'Siap Dijemput', 'Selesai'],
+};

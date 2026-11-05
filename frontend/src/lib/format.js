@@ -50,3 +50,9 @@ export function formatTanggalJam(nilai) {
     .toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
     .replace(':', '.')}`;
 }
+
+export const NAMA_BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+export function namaPeriode(bulan, tahun) {
+  return `${NAMA_BULAN[Number(bulan) - 1] ?? bulan} ${tahun}`;
+}

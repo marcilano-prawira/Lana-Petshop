@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AppShell from '../components/AppShell.jsx';
 import { Chip, Modal, Notice } from '../components/ui.jsx';
+import Linimasa from '../components/Linimasa.jsx';
 import { JudulHalaman, KhususPelanggan } from '../components/Pesanan.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { formatTanggalJam, formatTanggalPendek, rupiah } from '../lib/format.js';
+import { formatTanggalPendek, rupiah } from '../lib/format.js';
 import { formatTanggalWaktu } from '../lib/hotel.js';
 import { ringkasLayanan, statusGabungan, totalPesanan } from '../lib/status.js';
 
@@ -15,23 +16,6 @@ const FILTER = [
   ['selesai', 'Selesai', (k) => k === 'selesai'],
   ['dibatalkan', 'Dibatalkan', (k) => k === 'dibatalkan'],
 ];
-
-function Linimasa({ state }) {
-  if (!state || state.status === 'loading') return <p className="linimasa__info" aria-busy="true">Memuat progres…</p>;
-  if (state.status === 'error') return <Notice tipe="error">Gagal memuat progres: {state.pesan}</Notice>;
-  if (state.riwayat.length === 0) return <p className="linimasa__info">Belum ada catatan progres.</p>;
-  return (
-    <ol className="linimasa">
-      {state.riwayat.map((r, i) => (
-        <li key={r.id_progress ?? i} className={i === 0 ? 'linimasa__terkini' : ''}>
-          <strong>{r.status_progress}</strong>
-          {r.keterangan && <span>{r.keterangan}</span>}
-          <time>{formatTanggalJam(r.updated_at)}</time>
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 function KartuPesanan({ p, bayar, terbuka, progress, onToggle, onBatal }) {
   const st = statusGabungan(p, bayar);

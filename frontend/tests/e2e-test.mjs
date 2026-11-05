@@ -23,7 +23,7 @@ const App = (await vite.ssrLoadModule('/src/App.jsx')).default;
 
 /* ------------------------- backend tiruan ------------------------- */
 const iso = (h) => new Date(Date.now() + h * 3600e3).toISOString();
-let pets, pesanan, pembayaran, progress, log, petEndpointAda;
+let pets, pesanan, pembayaran, progress, log, petEndpointAda, paket, laporan;
 function reset() {
   petEndpointAda = true; log = [];
   pets = [{ id_pet: 1, nama_pet: 'Mochi', jenis_pet: 'Kucing' }];
@@ -41,6 +41,11 @@ function reset() {
     { id_pembayaran: 12, id_pesanan: 3, id_user: 5, nama_customer: 'Zain', total_harga: '120000.00', metode_pembayaran: 'Transfer Bank', bukti_pembayaran: foto, status_pembayaran: 'MENUNGGU', tanggal_bayar: iso(-2) },
     { id_pembayaran: 13, id_pesanan: 4, id_user: 5, nama_customer: 'Zain', total_harga: '120000.00', metode_pembayaran: 'QRIS', bukti_pembayaran: foto, status_pembayaran: 'TERVERIFIKASI', tanggal_bayar: iso(-4), tanggal_verifikasi: iso(-3) },
   ];
+  paket = [
+    { id_layanan: 'LYN1', nama_layanan: 'Full Grooming', detail_layanan: 'Mandi lengkap', jenis_paket: 'Premium', harga_paket: '120000.00' },
+    { id_layanan: 'LYN2', nama_layanan: 'Basic Wash', detail_layanan: null, jenis_paket: 'Basic', harga_paket: '50000.00' },
+  ];
+  laporan = [{ id_laporan: 'LAP1', bulan: 9, tahun: 2026, total_pesanan: 1, total_pendapatan: '120000.00', created_at: iso(-200) }];
   progress = { 4: [{ id_progress: 2, status_progress: 'Pembayaran Terverifikasi', keterangan: 'Pesanan akan segera diproses', updated_at: iso(-3) }, { id_progress: 1, status_progress: 'Menunggu Pembayaran', keterangan: 'Pesanan grooming berhasil dibuat', updated_at: iso(-5) }] };
 }
 const total = (p) => (p.jenis_pesanan === 'GROOMING' ? 120000 : 225000);
@@ -71,6 +76,48 @@ globalThis.fetch = async (url, opts = {}) => {
     b.status_pembayaran = body.status_pembayaran; b.tanggal_verifikasi = iso(0);
     if (body.status_pembayaran === 'TERVERIFIKASI') pesanan.find((x) => x.id_pesanan === b.id_pesanan).status_pesanan = 'DIPROSES';
     return res(200, b);
+  }
+  if (path === '/paket-grooming' && method === 'GET') return res(200, paket);
+  if (path === '/paket-grooming' && method === 'POST') { log.push(`BODY ${JSON.stringify(body)}`); const n = { id_layanan: `LYN${paket.length + 10}`, ...body, harga_paket: String(body.harga_paket) }; paket.push(n); return res(201, n); }
+  if ((m = path.match(/^\/paket-grooming\/(\w+)$/)) && method === 'PUT') { log.push(`BODY ${JSON.stringify(body)}`); const x = paket.find((q) => q.id_layanan === m[1]); Object.assign(x, body, { harga_paket: String(body.harga_paket) }); return res(200, x); }
+  if ((m = path.match(/^\/paket-grooming\/(\w+)$/)) && method === 'DELETE') { if (m[1] === 'LYN1') return res(409, null, 'Gagal menghapus: paket sudah dipakai pada pesanan'); paket = paket.filter((q) => q.id_layanan !== m[1]); return res(200, null, 'Berhasil terhapus'); }
+  const hotelDari = (p) => ({ id_hotel: `HTL${p.id_pesanan}`, id_pesanan: p.id_pesanan, jam_checkin: p.jam_checkin, jam_checkout: p.jam_checkout, tarif_per_hari: p.tarif_per_hari, id_user: p.id_user, status_pesanan: p.status_pesanan, nama_customer: p.nama_customer, nama_pet: p.nama_pet });
+  if (path === '/pet-hotel' && method === 'GET') return res(200, pesanan.filter((p) => p.jenis_pesanan === 'HOTEL').map(hotelDari));
+  if ((m = path.match(/^\/pet-hotel\/HTL(\d+)$/)) && method === 'PUT') {
+    log.push(`BODY ${JSON.stringify(body)}`);
+    const p = pesanan.find((x) => x.id_pesanan == m[1]);
+    if (pembayaran.some((b) => b.id_pesanan === p.id_pesanan)) return res(409, null, 'Gagal memperbarui: pesanan sudah memiliki pembayaran');
+    if (new Date(body.jam_checkout) <= new Date(body.jam_checkin)) return res(400, null, 'jam_checkout harus setelah jam_checkin');
+    Object.assign(p, { jam_checkin: body.jam_checkin, jam_checkout: body.jam_checkout });
+    return res(200, hotelDari(p));
+  }
+  if ((m = path.match(/^\/pet-hotel\/HTL(\d+)$/)) && method === 'DELETE') {
+    const p = pesanan.find((x) => x.id_pesanan == m[1]);
+    if (pembayaran.some((b) => b.id_pesanan === p.id_pesanan)) return res(409, null, 'Gagal menghapus: pesanan sudah memiliki pembayaran/laporan');
+    pesanan = pesanan.filter((x) => x !== p);
+    return res(200, null, 'Berhasil terhapus');
+  }
+  if ((m = path.match(/^\/progress\/pesanan\/(\d+)$/)) && method === 'POST') {
+    log.push(`BODY ${JSON.stringify(body)}`);
+    const p = pesanan.find((x) => x.id_pesanan == m[1]);
+    if (p.status_pesanan === 'MENUNGGU') return res(409, null, 'Update progress gagal: pembayaran belum terverifikasi');
+    if (p.status_pesanan !== 'DIPROSES') return res(409, null, 'Update progress gagal: pesanan sudah selesai atau dibatalkan');
+    progress[m[1]] = [{ id_progress: 100 + (progress[m[1]]?.length ?? 0), status_progress: body.status_progress, keterangan: body.keterangan, updated_at: iso(0) }, ...(progress[m[1]] ?? [])];
+    if (body.status_progress.trim().toLowerCase() === 'selesai') p.status_pesanan = 'SELESAI';
+    return res(201, progress[m[1]][0]);
+  }
+  if (path === '/laporan' && method === 'GET') return res(200, laporan);
+  if (path === '/laporan' && method === 'POST') {
+    log.push(`BODY ${JSON.stringify(body)}`);
+    if (laporan.some((l) => l.bulan === body.bulan && l.tahun === body.tahun)) return res(409, null, 'Gagal menyimpan laporan: laporan bulan dan tahun tersebut sudah ada');
+    const n = { id_laporan: `LAP${laporan.length + 1}`, bulan: body.bulan, tahun: body.tahun, total_pesanan: 1, total_pendapatan: '120000.00', created_at: iso(0) };
+    laporan.push(n);
+    return res(201, n);
+  }
+  if ((m = path.match(/^\/laporan\/(\w+)$/)) && method === 'GET') {
+    const l = laporan.find((x) => x.id_laporan === m[1]);
+    if (!l) return res(404, null, 'Laporan tidak ditemukan');
+    return res(200, { ...l, detail: [{ id_pesanan: 4, jenis_pesanan: 'GROOMING', tanggal_pesanan: iso(-5), status_pesanan: 'DIPROSES', nama_customer: 'Zain', nama_layanan: 'Full Grooming', total_harga: 120000 }] });
   }
   if ((m = path.match(/^\/progress\/pesanan\/(\d+)$/))) return res(200, { riwayat: progress[m[1]] ?? [] });
   return res(404, null, 'tidak ada');
@@ -201,6 +248,161 @@ cek(teks().includes('belum tersedia di backend'), 'endpoint belum ada (404) -> p
 root.unmount();
 root = await buka('/admin/pembayaran');
 cek(teks().includes('Layanan kami') && !teks().includes('Periksa foto bukti dari pelanggan'), 'customer membuka /admin/pembayaran -> dialihkan ke home (bukan halaman admin)');
+root.unmount();
+
+const lokal = (jam) => {
+  const d = new Date(Date.now() + jam * 3600e3);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+const baris = (kata) => [...document.querySelectorAll('tbody tr')].find((tr) => tr.textContent.includes(kata));
+
+console.log('ADMIN: MENU & AKSES');
+reset(); sesi('ADMIN');
+root = await buka('/home');
+cek(['/admin/pesanan', '/admin/paket', '/admin/laporan', '/pet-hotel', '/admin/pembayaran', '/admin/pesanan?tab=diproses'].every((h) => document.querySelector(`a[href="${h}"]`)), 'home admin: 6 menu aktif (tidak ada lagi "Segera hadir")');
+cek(!teks().includes('Segera hadir'), 'tidak ada kartu "Segera hadir"');
+root.unmount();
+reset(); sesi('CUSTOMER');
+root = await buka('/home');
+cek(!!document.querySelector('a[href="/pet-hotel"]') && !document.querySelector('a[href="/admin/paket"]'), 'home customer: ada Data Pet Hotel, tanpa menu admin');
+root.unmount();
+for (const rute of ['/admin/paket', '/admin/pesanan', '/admin/laporan']) {
+  root = await buka(rute);
+  cek(teks().includes('Layanan kami'), `customer membuka ${rute} -> dialihkan ke home`);
+  root.unmount();
+}
+
+console.log('ADMIN: PAKET GROOMING');
+reset(); sesi('ADMIN');
+root = await buka('/admin/paket');
+cek(document.querySelectorAll('tbody tr').length === 2 && teks().includes('Full Grooming') && teks().includes('120.000'), 'daftar paket tampil (2 baris, harga rupiah)');
+await klik(tombol('+ Tambah paket baru'));
+let dlg = document.querySelector('.modal');
+await submit(dlg.querySelector('form'));
+cek(teks(dlg).includes('Nama paket wajib diisi.') && teks(dlg).includes('Jenis paket wajib diisi.') && teks(dlg).includes('Harga wajib diisi.'), 'tambah kosong -> 3 alasan error');
+cek(!log.some((l) => l.startsWith('POST /paket-grooming')), 'tidak ada request terkirim saat invalid');
+await isi(dlg.querySelector('#nama_layanan'), 'Spa Hewan');
+await isi(dlg.querySelector('#jenis_paket'), 'Deluxe');
+await isi(dlg.querySelector('#harga_paket'), '150.000');
+await submit(dlg.querySelector('form'));
+cek(teks(dlg).includes('angka bulat'), 'harga "150.000" (ada titik) ditolak dengan alasan jelas');
+await isi(dlg.querySelector('#harga_paket'), '150000');
+await submit(dlg.querySelector('form')); await tunggu(100);
+cek(log.some((l) => l.startsWith('BODY') && l.includes('"nama_layanan":"Spa Hewan"') && l.includes('"harga_paket":150000') && l.includes('"detail_layanan":null')), 'body: harga dikirim sebagai angka, detail kosong = null');
+cek(!document.querySelector('.modal') && teks().includes('Daftar paket terbaru berhasil ditambahkan') && document.querySelectorAll('tbody tr').length === 3, 'modal tertutup, notifikasi sukses, daftar jadi 3 baris');
+await klik(tombol('Ubah', baris('Full Grooming')));
+dlg = document.querySelector('.modal');
+cek(dlg.querySelector('#nama_layanan').value === 'Full Grooming' && dlg.querySelector('#harga_paket').value === '120000', 'form ubah terisi data paket (harga tanpa desimal)');
+await isi(dlg.querySelector('#harga_paket'), '130000');
+await submit(dlg.querySelector('form')); await tunggu(100);
+cek(log.includes('PUT /paket-grooming/LYN1') && teks(baris('Full Grooming')).includes('130.000') && teks().includes('Daftar paket berhasil diubah'), 'ubah paket -> PUT, harga baru tampil, notifikasi');
+await klik(tombol('Hapus', baris('Basic Wash')));
+cek(teks(document.querySelector('.modal')).includes('Hapus paket?') && !!tombol('Hapus data sekarang', document.querySelector('.modal')) && !!tombol('Tidak', document.querySelector('.modal')), 'konfirmasi hapus punya tombol "Hapus data sekarang" dan "Tidak"');
+await klik(tombol('Tidak', document.querySelector('.modal')));
+cek(!document.querySelector('.modal') && !log.some((l) => l.startsWith('DELETE')) && document.querySelectorAll('tbody tr').length === 3, '"Tidak" -> modal tertutup, tidak ada DELETE, daftar tetap');
+await klik(tombol('Hapus', baris('Basic Wash')));
+await klik(tombol('Hapus data sekarang', document.querySelector('.modal'))); await tunggu(100);
+cek(log.includes('DELETE /paket-grooming/LYN2') && !baris('Basic Wash') && teks().includes('Berhasil terhapus'), 'hapus -> DELETE, baris hilang, notifikasi "Berhasil terhapus"');
+await klik(tombol('Hapus', baris('Full Grooming')));
+await klik(tombol('Hapus data sekarang', document.querySelector('.modal'))); await tunggu(100);
+cek(!!document.querySelector('.modal') && teks(document.querySelector('.modal')).includes('paket sudah dipakai pada pesanan') && !!baris('Full Grooming'), 'paket yang sudah dipesan gagal dihapus: pesan jelas di modal, daftar tetap');
+root.unmount();
+
+console.log('PET HOTEL');
+reset(); sesi('CUSTOMER');
+root = await buka('/pet-hotel');
+cek(document.querySelectorAll('tbody tr').length === 1 && teks().includes('225.000') && !tombol('Ubah') && !tombol('Hapus'), 'customer: lihat pesanan hotel (total 225.000), tanpa tombol ubah/hapus');
+await klik(tombol('Detail', baris('Mochi')));
+cek(teks(document.querySelector('.modal')).includes('Tarif per hari') && teks(document.querySelector('.modal')).includes('3 hari'), 'modal detail: durasi 3 hari + tarif per hari');
+root.unmount();
+
+reset(); sesi('ADMIN');
+pesanan.push({ ...pesanan[4], id_pesanan: 6 });   // hotel kedua, sudah punya pembayaran
+pembayaran.push({ ...pembayaran[1], id_pembayaran: 30, id_pesanan: 6, status_pembayaran: 'MENUNGGU' });
+root = await buka('/pet-hotel');
+cek(document.querySelectorAll('tbody tr').length === 2, 'admin: melihat semua pesanan hotel');
+cek(tombol('Ubah', baris('#6')).disabled && tombol('Hapus', baris('#6')).disabled && !tombol('Ubah', baris('#5')).disabled, 'pesanan yang sudah dibayar: ubah/hapus nonaktif; yang belum: aktif');
+await klik(tombol('Ubah', baris('#5')));
+dlg = document.querySelector('.modal');
+await isi(dlg.querySelector('#checkout'), lokal(1));
+await submit(dlg.querySelector('form'));
+cek(teks(dlg).includes('harus setelah waktu check-in'), 'ubah: checkout sebelum checkin ditolak');
+cek(!log.some((l) => l.startsWith('PUT /pet-hotel')), 'tidak ada PUT saat invalid');
+await isi(dlg.querySelector('#checkout'), lokal(24 + 120));
+cek(teks(dlg).includes('375.000'), 'ringkasan: total setelah diubah = 5 hari x 75.000 = 375.000');
+await submit(dlg.querySelector('form')); await tunggu(100);
+cek(log.includes('PUT /pet-hotel/HTL5') && log.some((l) => l.startsWith('BODY') && l.includes('"jam_checkin":"') && l.includes('Z"')) && teks().includes('375.000') && teks().includes('berhasil diperbarui'), 'ubah valid -> PUT dengan ISO, total baru tampil, notifikasi');
+await klik(tombol('Hapus', baris('#5')));
+cek(!!tombol('Hapus data sekarang', document.querySelector('.modal')) && !!tombol('Tidak', document.querySelector('.modal')), 'hapus: ada konfirmasi "Hapus data sekarang" / "Tidak"');
+await klik(tombol('Hapus data sekarang', document.querySelector('.modal'))); await tunggu(100);
+cek(log.includes('DELETE /pet-hotel/HTL5') && !baris('#5') && teks().includes('Berhasil terhapus'), 'hapus -> DELETE, baris hilang, notifikasi');
+root.unmount();
+
+console.log('ADMIN: SEMUA PESANAN & UPDATE PROGRESS');
+reset(); sesi('ADMIN');
+root = await buka('/admin/pesanan?tab=diproses');
+cek(document.querySelector('.tab--on')?.textContent.startsWith('Diproses') && document.querySelectorAll('tbody tr').length === 1, 'dari menu "Update Progress": tab Diproses terbuka dengan 1 pesanan');
+await klik(tombol('Update progres', baris('#4')));
+await tunggu(80);
+dlg = document.querySelector('.modal');
+cek(teks(dlg).includes('Pembayaran Terverifikasi') && !!dlg.querySelector('.foto-bukti img') && !!dlg.querySelector('#prog_status_progress'), 'modal: riwayat progres + bukti pembayaran + form update');
+await submit(dlg.querySelector('form'));
+cek(teks(dlg).includes('Status progres wajib diisi.') && !log.some((l) => l.startsWith('POST /progress')), 'form kosong -> alasan error, tidak ada POST');
+await isi(dlg.querySelector('#prog_status_progress'), 'Sedang Dimandikan');
+await isi(dlg.querySelector('#prog_keterangan'), 'Mochi sedang dimandikan');
+await submit(dlg.querySelector('form')); await tunggu(120);
+dlg = document.querySelector('.modal');
+cek(log.includes('POST /progress/pesanan/4') && teks(dlg).includes('Update progress berhasil diperbarui'), 'simpan progres -> POST, notifikasi sukses');
+cek(teks(dlg.querySelector('.linimasa__terkini')).includes('Sedang Dimandikan') && dlg.querySelector('#prog_status_progress').value === '', 'riwayat terbaru tampil paling atas, form dikosongkan');
+await isi(dlg.querySelector('#prog_status_progress'), 'selesai');
+cek(teks(dlg).includes('menutup pesanan'), '"Selesai" memunculkan peringatan menutup pesanan');
+const sebelum = log.filter((l) => l.startsWith('POST /progress')).length;
+await submit(dlg.querySelector('form'));
+cek(!!tombol('Ya, tandai selesai', document.querySelector('.modal')) && log.filter((l) => l.startsWith('POST /progress')).length === sebelum, '"Selesai": minta konfirmasi dulu, belum ada POST');
+await klik(tombol('Kembali', document.querySelector('.modal')));
+cek(!tombol('Ya, tandai selesai', document.querySelector('.modal')), 'Kembali membatalkan konfirmasi');
+await submit(document.querySelector('.modal form'));
+await klik(tombol('Ya, tandai selesai', document.querySelector('.modal'))); await tunggu(120);
+cek(pesanan.find((p) => p.id_pesanan === 4).status_pesanan === 'SELESAI' && teks(document.querySelector('.modal')).includes('sudah ditutup') && !document.querySelector('#prog_status_progress'), 'dikonfirmasi -> pesanan SELESAI, form hilang (sudah ditutup)');
+await klik(tombol('Tutup', document.querySelector('.modal')) ?? document.querySelector('.modal__tutup'));
+await klik([...document.querySelectorAll('.tab')].find((b) => b.textContent.startsWith('Selesai')));
+cek(!!baris('#4'), 'pesanan #4 pindah ke tab Selesai');
+root.unmount();
+
+reset(); sesi('ADMIN');
+root = await buka('/admin/pesanan');
+cek(document.querySelectorAll('tbody tr').length === 5 && teks(document.querySelector('.tab-bar')).includes('Semua 5'), 'tab Semua: 5 pesanan');
+await klik(tombol('Detail', baris('#1')));
+await tunggu(80);
+cek(teks(document.querySelector('.modal')).includes('belum bisa diperbarui') && !document.querySelector('#prog_status_progress'), 'pesanan belum dibayar: form update tidak tersedia + alasan');
+await klik(document.querySelector('.modal__tutup'));
+await klik(tombol('Detail', baris('#3')));
+await tunggu(80);
+cek(!!document.querySelector('.modal a[href="/admin/pembayaran"]') && !!document.querySelector('.modal .foto-bukti img') && !document.querySelector('#prog_status_progress'), 'pembayaran menunggu verifikasi: bukti tampil + tautan ke halaman verifikasi, tanpa form');
+root.unmount();
+
+console.log('ADMIN: LAPORAN');
+reset(); sesi('ADMIN');
+root = await buka('/admin/laporan');
+cek(document.querySelectorAll('tbody tr').length === 1 && teks().includes('September 2026') && teks().includes('120.000'), 'daftar laporan tampil (periode, total pesanan, pendapatan)');
+await klik(tombol('+ Buat laporan baru'));
+dlg = document.querySelector('.modal');
+await isi(dlg.querySelector('#tahun'), String(new Date().getFullYear() + 1));
+await submit(dlg.querySelector('form'));
+cek(teks(dlg).includes('tidak boleh di masa depan') && !log.some((l) => l.startsWith('POST /laporan')), 'periode masa depan ditolak, tidak ada POST');
+await isi(dlg.querySelector('#tahun'), '26');
+cek(teks(dlg).includes('4 angka'), 'tahun "26" ditolak');
+await isi(dlg.querySelector('#tahun'), String(new Date().getFullYear()));
+await submit(dlg.querySelector('form')); await tunggu(150);
+const bulanIni = new Date().getMonth() + 1;
+cek(log.some((l) => l.startsWith('BODY') && l.includes(`"bulan":${bulanIni}`) && l.includes(`"tahun":${new Date().getFullYear()}`)), 'body: bulan dan tahun dikirim sebagai angka');
+cek(teks().includes('Laporan terbaru berhasil ditambahkan') && teks(document.querySelector('.modal')).includes('Total pendapatan') && teks(document.querySelector('.modal')).includes('Full Grooming'), 'berhasil -> detail laporan terbuka (pesanan, layanan, total)');
+await klik(tombol('Tutup', document.querySelector('.modal')));
+cek(document.querySelectorAll('tbody tr').length === 2, 'daftar laporan bertambah jadi 2');
+await klik(tombol('+ Buat laporan baru'));
+await submit(document.querySelector('.modal form')); await tunggu(120);
+cek(teks(document.querySelector('.modal')).includes('sudah ada') && document.querySelectorAll('tbody tr').length === 2, 'periode kembar -> pesan jelas di modal, daftar tidak berubah');
 root.unmount();
 
 await vite.close();
