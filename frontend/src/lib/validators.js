@@ -388,3 +388,17 @@ export function validasiPeriodeLaporan(bulan, tahun, sekarang = new Date()) {
   if (t * 12 + (b - 1) > kini) return ['Periode laporan tidak boleh di masa depan.'];
   return [];
 }
+
+/* --------------------------- GANTI PASSWORD ---------------------------- */
+
+// Password lama hanya diperiksa "diisi atau tidak": aturan panjang/kekuatan berlaku untuk password baru,
+// sedangkan kecocokan password lama diputuskan oleh server.
+export function validasiPasswordLama(nilai) {
+  const v = typeof nilai === 'string' ? nilai : '';
+  return v.length === 0 ? ['Password lama wajib diisi.'] : [];
+}
+
+export function validasiPasswordBaruBerbeda(lama, baru) {
+  if (lama && baru && lama === baru) return ['Password baru tidak boleh sama dengan password lama.'];
+  return [];
+}

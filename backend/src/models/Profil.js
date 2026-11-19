@@ -28,6 +28,28 @@ export default class Profil {
     return t;
   }
 
+  // Aturan password baru (sama dengan aturan registrasi di frontend, kecuali daftar password umum).
+  // Mengembalikan password jika valid; melempar AppError berisi semua alasan jika tidak.
+  static validasiPasswordBaru(nilai, username = '') {
+    if (typeof nilai !== 'string' || nilai === '') throw new AppError('password_baru wajib diisi');
+
+    const alasan = [];
+    const panjang = [...nilai].length;
+    if (/\s/.test(nilai)) alasan.push('tidak boleh mengandung spasi');
+    if (panjang < 8) alasan.push(`terlalu pendek (${panjang} karakter, minimal 8)`);
+    if (Buffer.byteLength(nilai, 'utf8') > 72) alasan.push('terlalu panjang (maksimal 72 karakter)');
+    if (!/[a-z]/.test(nilai)) alasan.push('harus memuat huruf kecil');
+    if (!/[A-Z]/.test(nilai)) alasan.push('harus memuat huruf kapital');
+    if (!/[0-9]/.test(nilai)) alasan.push('harus memuat angka');
+    if (!/[^A-Za-z0-9\s]/.test(nilai)) alasan.push('harus memuat simbol');
+    if (/(.)\1{3,}/u.test(nilai)) alasan.push('tidak boleh memuat karakter yang sama berulang 4 kali atau lebih');
+    const u = String(username ?? '').trim().toLowerCase();
+    if (u.length >= 4 && nilai.toLowerCase().includes(u)) alasan.push('tidak boleh mengandung username');
+
+    if (alasan.length) throw new AppError(`Password baru tidak memenuhi syarat: ${alasan.join('; ')}.`);
+    return nilai;
+  }
+
   // null / '' = hapus foto. Selain itu harus data URL gambar yang isinya benar-benar gambar.
   static validasiFoto(nilai) {
     if (nilai === null || nilai === '') return null;

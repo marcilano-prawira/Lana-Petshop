@@ -1,6 +1,7 @@
 // Merakit semua object (dependency injection sederhana)
 import UserRepository from './repositories/UserRepository.js';
 import CustomerRepository from './repositories/CustomerRepository.js';
+import AdminRepository from './repositories/AdminRepository.js';
 import TokenRepository from './repositories/TokenRepository.js';
 import PetRepository from './repositories/PetRepository.js';
 import PaketGroomingRepository from './repositories/PaketGroomingRepository.js';
@@ -33,6 +34,7 @@ import AuthMiddleware from './middlewares/AuthMiddleware.js';
 
 const userRepository = new UserRepository();
 const customerRepository = new CustomerRepository();
+const adminRepository = new AdminRepository();
 const tokenRepository = new TokenRepository();
 const tokenService = new TokenService();
 const petRepository = new PetRepository();
@@ -43,7 +45,7 @@ const pembayaranRepository = new PembayaranRepository();
 const progressRepository = new ProgressRepository();
 const laporanRepository = new LaporanRepository();
 
-const authService = new AuthService({ userRepository, customerRepository, tokenRepository, tokenService });
+const authService = new AuthService({ userRepository, customerRepository, adminRepository, tokenRepository, tokenService });
 const petService = new PetService(petRepository);
 const paketService = new PaketGroomingService(paketRepository);
 const pesananService = new PesananService({ pesananRepository, petRepository, paketRepository, hotelRepository, progressRepository });

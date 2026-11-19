@@ -21,6 +21,8 @@ import {
   validasiBulan,
   validasiTahun,
   validasiPeriodeLaporan,
+  validasiPasswordLama,
+  validasiPasswordBaruBerbeda,
 } from './validators.js';
 
 const ada = (arr, teks) => arr.some((a) => a.includes(teks));
@@ -240,4 +242,16 @@ test('laporan: periode masa depan ditolak, bulan berjalan boleh', () => {
   assert.ok(ada(validasiPeriodeLaporan(11, 2026, kini), 'masa depan'));
   assert.ok(ada(validasiPeriodeLaporan(1, 2027, kini), 'masa depan'));
   assert.deepEqual(validasiPeriodeLaporan(13, 2026, kini), []); // kesalahan bulan dilaporkan validator bulan
+});
+
+// ---- ganti password ----
+test('ganti password: password lama hanya wajib diisi (kecocokan dinilai server)', () => {
+  assert.deepEqual(validasiPasswordLama(''), ['Password lama wajib diisi.']);
+  assert.deepEqual(validasiPasswordLama(undefined), ['Password lama wajib diisi.']);
+  assert.deepEqual(validasiPasswordLama('abc'), []); // password lama lama boleh lebih lemah dari aturan sekarang
+});
+test('ganti password: password baru tidak boleh sama dengan yang lama', () => {
+  assert.ok(ada(validasiPasswordBaruBerbeda('Lama#Pass1', 'Lama#Pass1'), 'tidak boleh sama'));
+  assert.deepEqual(validasiPasswordBaruBerbeda('Lama#Pass1', 'Baru#Pass2x'), []);
+  assert.deepEqual(validasiPasswordBaruBerbeda('', ''), []);
 });

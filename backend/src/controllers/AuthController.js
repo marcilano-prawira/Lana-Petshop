@@ -26,6 +26,16 @@ export default class AuthController extends BaseController {
     this.sukses(res, 'Profil berhasil diperbarui', data);
   };
 
+  verifikasiPasswordLama = async (req, res) => {
+    const data = await this.service.verifikasiPasswordLama(req.user, this.body(req));
+    this.sukses(res, 'Password lama benar', data);
+  };
+
+  gantiPassword = async (req, res) => {
+    await this.service.gantiPassword(req.user, req.token, this.body(req));
+    this.sukses(res, 'Password berhasil diubah. Silakan login kembali dengan password baru.');
+  };
+
   saya = async (req, res) => {
     const data = await this.service.profil(req.user);
     this.sukses(res, 'Profil berhasil dimuat', data);

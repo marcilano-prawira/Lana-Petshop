@@ -541,3 +541,16 @@ a.sosial:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(140, 89, 
 .profil__status--ubah { color: var(--warn); }
 .profil__simpan-aksi { display: flex; gap: 10px; }
 .profil__simpan-aksi .btn { padding: 10px 20px; }
+
+/* ---- Ganti password ---- */
+.ganti-pw { margin-top: 20px; display: grid; gap: 14px; }
+.ganti-pw h2 { margin: 0; }
+.ganti-pw__langkah { list-style: none; margin: 0; padding: 0; display: flex; gap: 22px; flex-wrap: wrap; }
+.ganti-pw__langkah li { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--ink-soft); }
+.ganti-pw__langkah li span { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--beige); color: var(--brown); font-size: 0.85rem; }
+.ganti-pw__langkah li.aktif { color: var(--brown); }
+.ganti-pw__langkah li.aktif span { background: var(--orange); color: #fff; }
+.ganti-pw__langkah li.selesai span { background: var(--ok); color: #fff; }
+.ganti-pw__info { margin: 0; color: var(--ink-soft); font-size: 0.92rem; }
+.ganti-pw__ok { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 800; color: var(--ok); }
+.ganti-pw__aksi { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }

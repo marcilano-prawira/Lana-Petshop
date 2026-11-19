@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import AppShell from '../components/AppShell.jsx';
+import GantiPassword from '../components/GantiPassword.jsx';
 import { Avatar, Field, Notice, PasswordInput } from '../components/ui.jsx';
 import { JudulHalaman } from '../components/Pesanan.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -163,7 +164,7 @@ export default function Profil() {
 
   return (
     <AppShell lebar={820}>
-      <JudulHalaman judul="Profil Saya" sub="Ubah foto, alamat, dan username akun Anda." />
+      <JudulHalaman judul="Profil Saya" sub="Ubah foto, alamat, username, dan password akun Anda." />
 
       {muat.status === 'loading' && <div className="langkah pesanan--skeleton" style={{ minHeight: 260 }} aria-busy="true" />}
       {muat.status === 'error' && (
@@ -174,6 +175,7 @@ export default function Profil() {
       )}
 
       {muat.status === 'ok' && (
+        <>
         <form className="profil" onSubmit={kirim} noValidate>
           {sukses.length > 0 && (
             <Notice tipe="success" judul="Profil berhasil disimpan" onClose={() => setSukses([])}>
@@ -297,6 +299,8 @@ export default function Profil() {
             </div>
           </div>
         </form>
+        <GantiPassword />
+        </>
       )}
     </AppShell>
   );

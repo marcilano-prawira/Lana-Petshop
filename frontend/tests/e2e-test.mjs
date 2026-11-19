@@ -24,10 +24,12 @@ const App = (await vite.ssrLoadModule('/src/App.jsx')).default;
 
 /* ------------------------- backend tiruan ------------------------- */
 const iso = (h) => new Date(Date.now() + h * 3600e3).toISOString();
-let pets, pesanan, pembayaran, progress, log, petEndpointAda, profilSrv, lastPatch;
+let pets, pesanan, pembayaran, progress, log, petEndpointAda, profilSrv, lastPatch, passwordSrv, lastPassword;
 function reset() {
   petEndpointAda = true; log = [];
   lastPatch = null;
+  lastPassword = null;
+  passwordSrv = { sekarang: 'Kucing#2026', terkunci: false };
   profilSrv = { id_user: 'USR0005', username: 'zain', role: 'CUSTOMER', nama: 'Zain Satrio', alamat: 'Jl. Lama No. 1, Cimahi', no_hp_customer: '081234567890', foto_profil: null };
   pets = [{ id_pet: 'PET0001', nama_pet: 'Mochi', jenis_pet: 'Kucing' }];
   const dasar = { id_user: 5, nama_customer: 'Zain', nama_pet: 'Mochi', tanggal_pesanan: iso(-5), jenis_pesanan: 'GROOMING', nama_layanan: 'Full Grooming', harga_paket: '120000.00' };
@@ -83,6 +85,18 @@ globalThis.fetch = async (url, opts = {}) => {
     return res(201, { id_pesanan: 'PSN0099', nama_pet: 'Mochi', nama_layanan: 'Full Grooming', harga_paket: '120000.00', jenis_pesanan: 'GROOMING' }); }
   if (path === '/pesanan/hotel' && method === 'POST') { log.push(`ORDER hotel ${typeof body.id_pet}:${body.id_pet}`);
     return res(201, { id_pesanan: 'PSN0098', nama_pet: 'Mochi', jam_checkin: body.jam_checkin, jam_checkout: body.jam_checkout, tarif_per_hari: '75000.00', jenis_pesanan: 'HOTEL' }); }
+  if (path === '/auth/password/verifikasi' && method === 'POST') {
+    if (passwordSrv.terkunci) return res(429, null, 'Terlalu banyak percobaan password yang salah. Coba lagi dalam 15 menit.');
+    if (body.password_lama !== passwordSrv.sekarang) return res(403, null, 'Password lama salah');
+    return res(200, { valid: true }, 'Password lama benar');
+  }
+  if (path === '/auth/password' && method === 'PUT') {
+    lastPassword = body;
+    if (body.password_lama !== passwordSrv.sekarang) return res(403, null, 'Password lama salah');
+    passwordSrv.sekarang = body.password_baru;
+    return res(200, null, 'Password berhasil diubah. Silakan login kembali dengan password baru.');
+  }
+  if (path === '/auth/logout' && method === 'POST') return res(200, null, 'Berhasil keluar akun');
   if (path === '/auth/saya' && method === 'GET') return res(200, { ...profilSrv });
   if (path === '/auth/profil' && method === 'PATCH') {
     lastPatch = body; log.push(`PATCH profil ${Object.keys(body).sort().join(',')}`);
@@ -375,6 +389,100 @@ cek(teks().includes('Gagal memuat profil') && !!tombol('Coba lagi'), 'server err
 globalThis.fetch = fetchAsli;
 await klik(tombol('Coba lagi')); await tunggu(80);
 cek(!!document.getElementById('username'), '"Coba lagi" berhasil memuat form');
+root.unmount();
+
+console.log('GANTI PASSWORD (dua langkah)');
+reset(); sesi('CUSTOMER');
+root = await buka('/profil');
+const formLama = () => document.getElementById('password_lama')?.closest('form');
+cek(teks().includes('Ganti password') && !!document.getElementById('password_lama') && !document.getElementById('password_baru') && !document.getElementById('password_konfirmasi'), 'awalnya hanya langkah 1 (password lama); form password baru belum ada');
+cek(teks().includes('Verifikasi password lama') && teks().includes('Buat password baru'), 'penunjuk 2 langkah tampil');
+
+await submit(formLama());
+cek(teks().includes('Password lama wajib diisi.') && !log.some((l) => l.includes('/auth/password')), 'password lama kosong -> ditolak di browser, tidak ada request');
+
+await isi(document.getElementById('password_lama'), 'salahbanget');
+await submit(formLama()); await tunggu(80);
+cek(log.includes('POST /auth/password/verifikasi') && teks().includes('Password lama salah') && !document.getElementById('password_baru'), 'password lama salah (403) -> pesan di kolom, form password baru tetap tertutup');
+cek(!!sessionStorage.getItem('lana_session') && !!document.getElementById('password_lama'), '403 TIDAK membuat pengguna ter-logout');
+
+passwordSrv.terkunci = true;
+await submit(formLama()); await tunggu(80);
+cek(teks().includes('Terlalu banyak percobaan') && !!sessionStorage.getItem('lana_session') && !document.getElementById('password_baru'), 'terkunci (429) -> pesan tampil, tetap login, form baru tetap tertutup');
+passwordSrv.terkunci = false;
+
+await isi(document.getElementById('password_lama'), 'Kucing#2026');
+await submit(formLama()); await tunggu(80);
+cek(!!document.getElementById('password_baru') && !!document.getElementById('password_konfirmasi') && teks().includes('Password lama terverifikasi'), 'password lama benar -> form password baru terbuka');
+cek(!document.getElementById('password_lama') && document.activeElement?.id === 'password_baru', 'kolom password lama diganti ringkasan; fokus pindah ke password baru');
+cek(!!document.querySelector('.ganti-pw .pw-meter') && teks().includes('Kekuatan password'), 'meter kekuatan & daftar aturan tampil');
+
+const formBaru = () => document.getElementById('password_baru').closest('form');
+await submit(formBaru());
+cek(teks().includes('Password wajib diisi.') && teks().includes('Konfirmasi password wajib diisi.') && !log.includes('PUT /auth/password'), 'form baru kosong -> alasan error, tidak ada PUT');
+
+await isi(document.getElementById('password_baru'), 'lemah');
+await submit(formBaru());
+cek(teks().includes('terlalu pendek') && teks().includes('huruf kapital') && teks().includes('angka') && teks().includes('simbol'), 'password lemah -> semua alasan tampil sekaligus');
+
+await isi(document.getElementById('password_baru'), 'Kucing#2026');
+await isi(document.getElementById('password_konfirmasi'), 'Kucing#2026');
+await submit(formBaru());
+cek(teks().includes('Password baru tidak boleh sama dengan password lama') && !log.includes('PUT /auth/password'), 'password baru = password lama -> ditolak di browser');
+
+await isi(document.getElementById('password_baru'), 'Anjing#2027');
+await isi(document.getElementById('password_konfirmasi'), 'Anjing#2028');
+await submit(formBaru());
+cek(teks().includes('Konfirmasi password tidak sama') && !log.includes('PUT /auth/password'), 'konfirmasi tidak sama -> ditolak di browser');
+
+await klik(tombol('Batal', document.querySelector('.ganti-pw')));
+cek(!!document.getElementById('password_lama') && document.getElementById('password_lama').value === '' && !document.getElementById('password_baru'), 'Batal -> kembali ke langkah 1, isian dikosongkan');
+
+// langkah 2 gagal 403 (password lama berubah di tempat lain) -> kembali ke langkah 1
+await isi(document.getElementById('password_lama'), 'Kucing#2026');
+await submit(formLama()); await tunggu(80);
+passwordSrv.sekarang = 'DiGantiLain#9';
+await isi(document.getElementById('password_baru'), 'Anjing#2027');
+await isi(document.getElementById('password_konfirmasi'), 'Anjing#2027');
+await submit(formBaru()); await tunggu(100);
+cek(!!document.getElementById('password_lama') && teks().includes('Password lama salah') && !!sessionStorage.getItem('lana_session'), 'PUT 403 -> kembali ke langkah 1 dengan pesan, pengguna tetap login');
+passwordSrv.sekarang = 'Kucing#2026';
+
+// jalur sukses
+await isi(document.getElementById('password_lama'), 'Kucing#2026');
+await submit(formLama()); await tunggu(80);
+await isi(document.getElementById('password_baru'), 'Anjing#2027');
+await isi(document.getElementById('password_konfirmasi'), 'Anjing#2027');
+await submit(formBaru()); await tunggu(150);
+cek(log.includes('PUT /auth/password') && JSON.stringify(lastPassword) === JSON.stringify({ password_lama: 'Kucing#2026', password_baru: 'Anjing#2027' }), 'body PUT: hanya password_lama + password_baru (tanpa konfirmasi)');
+cek(passwordSrv.sekarang === 'Anjing#2027', 'server menerima password baru');
+cek(sessionStorage.getItem('lana_session') === null && !!document.getElementById('username') && !document.querySelector('.ganti-pw'), 'berhasil -> sesi dihapus, kembali ke halaman login');
+cek(teks().includes('Password berhasil diubah. Silakan login dengan password baru.'), 'notifikasi sukses tampil di halaman login');
+cek(log.includes('POST /auth/logout'), 'token lama dicabut (logout dipanggil, hasilnya diabaikan)');
+root.unmount();
+
+console.log('GANTI PASSWORD: aturan khusus');
+reset(); sesi('CUSTOMER');
+{ const s = JSON.parse(sessionStorage.getItem('lana_session')); s.user.username = 'budisantoso'; sessionStorage.setItem('lana_session', JSON.stringify(s)); }
+root = await buka('/profil');
+await isi(document.getElementById('password_lama'), 'Kucing#2026');
+await submit(formLama()); await tunggu(80);
+await isi(document.getElementById('password_baru'), 'Budisantoso#1A');
+await isi(document.getElementById('password_konfirmasi'), 'Budisantoso#1A');
+await submit(formBaru());
+cek(teks().includes('tidak boleh mengandung username') && !log.includes('PUT /auth/password'), 'password memuat username -> ditolak');
+await isi(document.getElementById('password_baru'), 'Aman#Sekali99');
+cek([...document.querySelectorAll('.pw-checklist li')].every((li) => li.classList.contains('ok')) && teks().includes('Sangat kuat'), 'semua aturan terpenuhi -> checklist hijau semua, kekuatan "Sangat kuat"');
+root.unmount();
+
+console.log('GANTI PASSWORD: admin & halaman profil lain tetap normal');
+reset(); sesi('ADMIN');
+root = await buka('/profil');
+cek(!!document.getElementById('password_lama') && !!document.getElementById('alamat') && !!document.getElementById('username'), 'admin: ganti password tersedia bersama form profil');
+cek(document.querySelectorAll('form').length === 2 && document.querySelector('form').id !== 'x' && !!document.querySelector('form.profil'), 'dua form terpisah (profil dan ganti password), tidak bersarang');
+await isi(document.getElementById('alamat'), 'Jl. Kantor Pusat No. 5, Bandung');
+await submit(document.querySelector('form.profil')); await tunggu(100);
+cek(lastPatch.alamat === 'Jl. Kantor Pusat No. 5, Bandung' && !log.some((l) => l.includes('/auth/password')), 'menyimpan profil tidak menyentuh endpoint password');
 root.unmount();
 
 await vite.close();
