@@ -124,3 +124,35 @@ export async function kompresFoto(file) {
 export function formatUkuran(byte) {
   return byte >= 1024 * 1024 ? `${mb(byte)} MB` : `${Math.max(1, Math.round(byte / 1024))} KB`;
 }
+
+// Foto profil: dipotong persegi dari tengah, 400x400 px, JPEG (target <= ~120 KB).
+export const BATAS_PROFIL = { UKURAN_PX: 400, MIN_SISI_PX: 100, TARGET_BYTE: 120 * 1024 };
+
+export async function kompresFotoProfil(file) {
+  const gambar = await bukaGambar(file);
+  const { width: w, height: h } = gambar;
+  if (Math.min(w, h) < BATAS_PROFIL.MIN_SISI_PX) {
+    throw new Error(`Resolusi foto terlalu kecil (${w}×${h} px). Minimal ${BATAS_PROFIL.MIN_SISI_PX} px pada sisi terpendek.`);
+  }
+
+  const sisi = Math.min(w, h);
+  const sx = Math.floor((w - sisi) / 2);
+  const sy = Math.floor((h - sisi) / 2);
+  const ukuran = Math.min(BATAS_PROFIL.UKURAN_PX, sisi);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = ukuran;
+  canvas.height = ukuran;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, ukuran, ukuran);
+  ctx.drawImage(gambar, sx, sy, sisi, sisi, 0, 0, ukuran, ukuran);
+
+  let blob = null;
+  for (const kualitas of [0.85, 0.75, 0.65, 0.55, 0.45]) {
+    blob = await keBlob(canvas, kualitas);
+    if (blob.size <= BATAS_PROFIL.TARGET_BYTE) break;
+  }
+  if (gambar.close) gambar.close();
+  return { dataUrl: await keDataUrl(blob), byte: blob.size, ukuran };
+}

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Brand } from './ui.jsx';
+import { Avatar, Brand } from './ui.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import useSisaWaktu from '../lib/useSisaWaktu.js';
 import { NAMA_ROLE, formatSisa } from '../lib/format.js';
@@ -7,7 +7,7 @@ import { SESSION_WARNING_MS } from '../config.js';
 
 // Kerangka halaman setelah login: topbar, timer sesi, banner peringatan.
 export default function AppShell({ children, lebar = 1200 }) {
-  const { user, sesi, keluar } = useAuth();
+  const { user, sesi, keluar, profil } = useAuth();
   const sisa = useSisaWaktu(sesi.expiresAt);
   const hampirHabis = sisa <= SESSION_WARNING_MS;
 
@@ -23,12 +23,15 @@ export default function AppShell({ children, lebar = 1200 }) {
             <span className="timer__value" role="timer">{formatSisa(sisa)}</span>
           </div>
           <div className="usercard">
-            <span className="usercard__avatar">{(user.nama || user.username).charAt(0).toUpperCase()}</span>
+            <Avatar foto={profil?.foto_profil} nama={user.nama || user.username} ukuran={40} />
             <div>
               <strong>{user.nama || user.username}</strong>
               <small>{NAMA_ROLE[user.role] || user.role}</small>
             </div>
           </div>
+          <Link to="/profil" className="btn btn--ghost">
+            Profil
+          </Link>
           <button className="btn btn--ghost" onClick={() => keluar({ tipe: 'success', teks: 'Anda telah keluar dari akun.' })}>
             Keluar
           </button>

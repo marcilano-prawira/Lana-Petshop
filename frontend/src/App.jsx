@@ -13,6 +13,7 @@ import AdminPaket from './pages/AdminPaket.jsx';
 import AdminPesanan from './pages/AdminPesanan.jsx';
 import AdminLaporan from './pages/AdminLaporan.jsx';
 import PetHotel from './pages/PetHotel.jsx';
+import Profil from './pages/Profil.jsx';
 
 // Halaman yang butuh login
 function Terlindungi({ children, peran }) {
@@ -40,6 +41,7 @@ export default function App() {
       <Route path="/hewan-saya" element={<Terlindungi><HewanSaya /></Terlindungi>} />
       <Route path="/pesanan" element={<Terlindungi><PesananSaya /></Terlindungi>} />
       <Route path="/bayar/:idPesanan" element={<Terlindungi><Bayar /></Terlindungi>} />
+      <Route path="/profil" element={<Terlindungi><Profil /></Terlindungi>} />
       <Route path="/pet-hotel" element={<Terlindungi><PetHotel /></Terlindungi>} />
       <Route path="/admin/pembayaran" element={<Terlindungi peran="ADMIN"><AdminPembayaran /></Terlindungi>} />
       <Route path="/admin/pesanan" element={<Terlindungi peran="ADMIN"><AdminPesanan /></Terlindungi>} />

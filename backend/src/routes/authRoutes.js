@@ -7,5 +7,6 @@ router.post('/registrasi', c.registrasi);               // publik (Customer)
 router.post('/login', c.login);                         // publik (Admin, Customer)
 router.post('/logout', auth.identifikasi, c.logout);    // Admin, Customer
 router.get('/saya', auth.identifikasi, c.saya);         // Admin, Customer
+router.patch('/profil', auth.identifikasi, c.perbaruiProfil); // Admin, Customer: ubah username, alamat, foto
 
 export default router;
