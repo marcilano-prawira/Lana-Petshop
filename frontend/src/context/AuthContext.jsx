@@ -12,6 +12,8 @@ export function AuthProvider({ children }) {
   const sesiRef = useRef(sesi);
   sesiRef.current = sesi;
   const sedangKeluar = useRef(false);
+  // Profil lengkap dari server (foto, alamat, ...). Foto sengaja tidak disimpan di sessionStorage.
+  const [profil, setProfil] = useState(null);
 
   // Keluar dari akun: cabut token di server (best effort), hapus sesi lokal,
   // lalu kembali ke halaman login dengan pesan.
@@ -62,6 +64,37 @@ export function AuthProvider({ children }) {
     [keluar]
   );
 
+  // Memuat profil (foto, alamat) satu kali per sesi untuk ditampilkan di topbar.
+  // Gagal memuat tidak mengganggu aplikasi: avatar jatuh ke huruf pertama nama.
+  const token = sesi?.token;
+  useEffect(() => {
+    if (!token) {
+      setProfil(null);
+      return undefined;
+    }
+    let batal = false;
+    apiAuth('/auth/saya')
+      .then((res) => {
+        if (!batal) setProfil(res.data ?? null);
+      })
+      .catch(() => {});
+    return () => {
+      batal = true;
+    };
+  }, [token, apiAuth]);
+
+  // Dipanggil setelah profil berhasil disimpan: sinkronkan tampilan dan data sesi (username/nama).
+  const perbaruiProfil = useCallback((data) => {
+    if (!data) return;
+    setProfil(data);
+    setSesi((s) => {
+      if (!s) return s;
+      const baru = { ...s, user: { ...s.user, username: data.username ?? s.user.username, nama: data.nama ?? s.user.nama } };
+      simpanSesi(baru);
+      return baru;
+    });
+  }, []);
+
   // Pengawas batas waktu sesi. Selain interval, juga dicek saat tab kembali
   // aktif karena browser memperlambat timer di tab yang tersembunyi.
   useEffect(() => {
@@ -95,11 +128,13 @@ export function AuthProvider({ children }) {
       sesi,
       user: sesi?.user ?? null,
       terautentikasi: Boolean(sesi),
+      profil,
+      perbaruiProfil,
       masuk,
       keluar,
       apiAuth,
     }),
-    [sesi, masuk, keluar, apiAuth]
+    [sesi, profil, perbaruiProfil, masuk, keluar, apiAuth]
   );
 
   return <AuthContext.Provider value={nilai}>{children}</AuthContext.Provider>;

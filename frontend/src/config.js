@@ -36,3 +36,15 @@ export const SARAN_PROGRESS = {
   GROOMING: ['Sedang Dimandikan', 'Sedang Dikeringkan', 'Sedang Dirapikan', 'Siap Dijemput', 'Selesai'],
   HOTEL: ['Hewan Check-in', 'Sedang Dirawat', 'Siap Dijemput', 'Selesai'],
 };
+
+// Tautan sosial media yang tampil di panel kiri halaman Login & Registrasi.
+// ISI `url` dengan alamat asli (harus diawali https://). Jika `url` kosong,
+// tombolnya tetap tampil tetapi nonaktif.
+//   WhatsApp : https://wa.me/628xxxxxxxxxx   (nomor tanpa 0 / +, awali 62)
+//   Instagram: https://instagram.com/username_toko
+//   TikTok   : https://www.tiktok.com/@username_toko
+export const SOSIAL_MEDIA = [
+  { nama: 'WhatsApp', url: '', petunjuk: 'Chat kami di WhatsApp' },
+  { nama: 'Instagram', url: '', petunjuk: 'Ikuti Instagram kami' },
+  { nama: 'TikTok', url: '', petunjuk: 'Tonton TikTok kami' },
+];

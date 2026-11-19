@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { SOSIAL_MEDIA } from '../config.js';
 
 /* ------------------------------- Logo -------------------------------- */
 
@@ -155,17 +156,16 @@ export function AuthLayout({ judul, subjudul, children, footer }) {
             </h1>
             <p>Grooming dan penitipan hewan kesayangan, dipantau langsung dari satu tempat.</p>
           </div>
-          <ul className="auth__points">
-            <li>
-              <span>✂</span> Paket grooming sesuai kebutuhan
-            </li>
-            <li>
-              <span>🏠</span> Pet hotel yang nyaman
-            </li>
-            <li>
-              <span>📋</span> Pantau progres layanan
-            </li>
-          </ul>
+          <div className="auth__sosial">
+            <p className="auth__sosial-judul">Hubungi &amp; ikuti kami</p>
+            <ul className="auth__sosial-daftar">
+              {SOSIAL_MEDIA.map((s) => (
+                <li key={s.nama}>
+                  <LinkSosial s={s} />
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
         <PawIcon size={360} className="auth__paw auth__paw--1" />
         <PawIcon size={200} className="auth__paw auth__paw--2" />
@@ -255,4 +255,68 @@ export function sumberGambar(bukti) {
   if (/^data:image\/(jpeg|png|webp);base64,/i.test(bukti)) return bukti;
   if (/^https?:\/\//i.test(bukti) || bukti.startsWith('/')) return bukti;
   return null;
+}
+
+/* ---------------------------- Sosial media ---------------------------- */
+
+const IKON_SOSIAL = {
+  WhatsApp: (
+    <>
+      <path d="M3 21l1.65-4.8A9 9 0 1 1 8 19.4L3 21z" />
+      <path d="M9.2 8.6c-.4 1.3.2 3 1.7 4.5s3.2 2.1 4.5 1.7l.9-1.1-1.8-1-.8.6c-.9-.3-1.9-1.3-2.2-2.2l.6-.8-1-1.8-1.1.9z" fill="currentColor" stroke="none" />
+    </>
+  ),
+  Instagram: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </>
+  ),
+  TikTok: (
+    <>
+      <path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5" />
+      <path d="M14 3c.4 2.6 2 4.4 5 4.7" />
+    </>
+  ),
+};
+
+function IkonSosial({ nama }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {IKON_SOSIAL[nama] ?? <circle cx="12" cy="12" r="9" />}
+    </svg>
+  );
+}
+
+// Hanya tautan http(s) yang dijadikan link; kosong/tidak valid -> tombol nonaktif.
+export function LinkSosial({ s }) {
+  const aman = typeof s.url === 'string' && /^https?:\/\//i.test(s.url);
+  const isi = (
+    <>
+      <IkonSosial nama={s.nama} />
+      <span>{s.nama}</span>
+    </>
+  );
+  return aman ? (
+    <a className="sosial" href={s.url} target="_blank" rel="noopener noreferrer" aria-label={`${s.petunjuk} (buka di tab baru)`}>
+      {isi}
+    </a>
+  ) : (
+    <span className="sosial sosial--nonaktif" aria-disabled="true" title="Tautan belum diatur">
+      {isi}
+    </span>
+  );
+}
+
+/* -------------------------------- Avatar ------------------------------ */
+
+// Foto profil bila ada, jika tidak huruf pertama nama.
+export function Avatar({ foto, nama = '?', ukuran = 40 }) {
+  const src = sumberGambar(foto);
+  return (
+    <span className="avatar" style={{ width: ukuran, height: ukuran, fontSize: ukuran * 0.42 }}>
+      {src ? <img src={src} alt="" /> : String(nama).charAt(0).toUpperCase()}
+    </span>
+  );
 }

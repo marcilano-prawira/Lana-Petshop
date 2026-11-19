@@ -33,6 +33,11 @@ export default class AuthMiddleware {
     const user = await this.userRepository.findById(payload.sub);
     if (!user) throw new AppError('Akun tidak ditemukan', 401);
 
+    // Password sudah diganti setelah token ini diterbitkan -> sesi lama tidak berlaku lagi
+    if (user.password_diubah_at && payload.iat < Math.floor(new Date(user.password_diubah_at).getTime() / 1000)) {
+      throw new AppError('Password akun telah diubah, silakan login kembali', 401);
+    }
+
     req.user = { id_user: user.id_user, role: user.role };
     req.token = payload;
     next();
